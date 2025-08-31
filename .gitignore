@@ -2,6 +2,18 @@
 #
 .DS_Store
 
+# Environment variables
+.env
+.env.*
+
+# VSCode settings
+.vscode/
+
+# iOS build artifacts
+ios/build/
+ios/Pods/
+ios/Podfile.lock
+
 # Xcode
 #
 build/
@@ -37,6 +49,7 @@ local.properties
 
 # node.js
 #
+package-lock.json
 node_modules/
 npm-debug.log
 yarn-error.log
