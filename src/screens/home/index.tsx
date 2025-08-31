@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
-import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { FlatList, Image, RefreshControl, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { Movie } from "../../models/movieModel";
 import { formatDate } from "../../configs";
 import styles from "./style";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchPlayingMovies, fetchPopularMovies, fetchUpcomingMovies } from "../../redux/movieStore/movieThunks";
 import { AppDispatch, RootState } from "../../redux/store";
-import IonIcon from 'react-native-vector-icons/Ionicons';
+import CFilterList from '../../components/CFilterList';
+import CHeader from "../../components/CHeader";
+import CLoadingIndicator from "../../components/CLoadingIndicator";
+import { RoutesName } from "../../const/enum/routeNames";
 
 const CATEGORY_OPTIONS = [
     { label: "Now Playing", value: "now_playing" },
@@ -20,31 +23,44 @@ const SORT_OPTIONS = [
     { label: "By release date", value: "releaseDate" },
 ];
 
+
 const HomeScreen = () => {
     const [search, setSearch] = useState<string>("");
     const [category, setCategory] = useState<string>("now_playing");
     const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
     const [sortDropdownOpen, setSortDropdownOpen] = useState<boolean>(false);
     const [sortOption, setSortOption] = useState<string>("alphabetical");
+    const [page, setPage] = useState<number>(1);
+    const [refreshing, setRefreshing] = useState<boolean>(false);
     const dispatch = useDispatch<AppDispatch>();
     const playingMovieState = useSelector((state: RootState) => state.moviePlayingReducer);
     const upcomingMovieState = useSelector((state: RootState) => state.movieUpcomingReducer);
     const popularMovieState = useSelector((state: RootState) => state.moviePopularReducer);
 
-    console.log('upcoming: ', upcomingMovieState)
+    useEffect(() => {
+        // Reset to page 1 when category changes
+        setPage(1);
+    }, [category]);
 
     useEffect(() => {
-        // Only fetch the selected category
+        // Fetch movies for the selected category and page
         if (category === "now_playing") {
-            dispatch(fetchPlayingMovies(1));
+            dispatch(fetchPlayingMovies(page));
         } else if (category === "upcoming") {
-            dispatch(fetchUpcomingMovies(1));
+            dispatch(fetchUpcomingMovies(page));
         } else if (category === "popular") {
-            dispatch(fetchPopularMovies(1));
+            dispatch(fetchPopularMovies(page));
         }
-    }, [category, dispatch]);
+    }, [category, page, dispatch]);
+
+    useEffect(() => {
+        if (!playingMovieState.loading && !upcomingMovieState.loading && !popularMovieState.loading) {
+            setRefreshing(false);
+        }
+    }, [playingMovieState.loading, upcomingMovieState.loading, popularMovieState.loading]);
 
     let movies: Movie[] = [];
+    let isLoading = playingMovieState.loading || upcomingMovieState.loading || popularMovieState.loading;
     if (category === "now_playing") {
         movies = playingMovieState?.movies || [];
     } else if (category === "upcoming") {
@@ -53,108 +69,101 @@ const HomeScreen = () => {
         movies = popularMovieState?.movies || [];
     }
 
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        setPage(1);
+        if (category === "now_playing") {
+            await dispatch(fetchPlayingMovies(1));
+        } else if (category === "upcoming") {
+            await dispatch(fetchUpcomingMovies(1));
+        } else if (category === "popular") {
+            await dispatch(fetchPopularMovies(1));
+        }
+    };
+
     return (
-        <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 24 }}>
-            {/* Header */}
-            <View style={styles.header}>
-                <Image
-                    source={require("../../../assets/images/movieLogo.png")}
-                    style={{ height: 40, width: 120, resizeMode: "contain" }}
-                />
-            </View>
-
-            {/* Filters */}
-            <View style={styles.filters}>
-                {/* Category Dropdown */}
-                <View style={{ marginBottom: 8 }}>
+        <>
+            {isLoading ? <CLoadingIndicator /> : <FlatList
+                style={styles.container}
+                contentContainerStyle={{ paddingBottom: 48 }}
+                data={movies}
+                keyExtractor={(item) => item.id.toString()}
+                ListHeaderComponent={
+                    <>
+                        {/* Header */}
+                        <CHeader />
+                        {/* Filters */}
+                        <View style={styles.filters}>
+                            {/* Category Dropdown */}
+                            <CFilterList
+                                options={CATEGORY_OPTIONS}
+                                selectedValue={category}
+                                dropdownOpen={dropdownOpen}
+                                setDropdownOpen={setDropdownOpen}
+                                onSelect={setCategory}
+                            />
+                            {/* Sort by Dropdown */}
+                            <CFilterList
+                                options={SORT_OPTIONS}
+                                selectedValue={sortOption}
+                                dropdownOpen={sortDropdownOpen}
+                                setDropdownOpen={setSortDropdownOpen}
+                                onSelect={setSortOption}
+                            />
+                            <TextInput
+                                style={styles.searchInput}
+                                placeholder="Search..."
+                                value={search}
+                                onChangeText={setSearch}
+                            />
+                            <TouchableOpacity style={styles.searchButton}>
+                                <Text style={{ color: "#888" }}>Search</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </>
+                }
+                renderItem={({ item }) => (
                     <TouchableOpacity
-                        style={styles.filterButton}
-                        onPress={() => setDropdownOpen(!dropdownOpen)}
+                        // onPress={() => navigation.navigate(RoutesName.Details, { movie: item })}
+                        activeOpacity={0.8}
                     >
-                        <Text style={styles.filterButtonText}>
-                            {CATEGORY_OPTIONS.find(opt => opt.value === category)?.label || "Now Playing"}
-                        </Text>
-                        <IonIcon name={dropdownOpen ? "arrow-down-outline" : "arrow-forward-outline"} size={16} color="#222" />
-                    </TouchableOpacity>
-                    {dropdownOpen && (
-                        <View style={{ backgroundColor: '#fff', borderRadius: 8, elevation: 2, marginTop: 4 }}>
-                            {CATEGORY_OPTIONS.map(opt => (
-                                <TouchableOpacity
-                                    key={opt.value}
-                                    style={{ padding: 12, backgroundColor: category === opt.value ? '#e0f0ff' : '#fff' }}
-                                    onPress={() => {
-                                        setCategory(opt.value);
-                                        setDropdownOpen(false);
-                                    }}
-                                >
-                                    <Text style={{ color: category === opt.value ? '#007aff' : '#222' }}>{opt.label}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    )}
-                </View>
-                {/* Sort by button is a dropdown like Category */}
-                <View style={{ marginBottom: 8 }}>
-                    <TouchableOpacity style={styles.filterButton} onPress={() => setSortDropdownOpen(!sortDropdownOpen)}>
-                        <Text style={styles.filterButtonText}>
-                            {SORT_OPTIONS.find(opt => opt.value === sortOption)?.label || "Sort by"}
-                        </Text>
-                        <IonIcon name={sortDropdownOpen ? "arrow-down-outline" : "arrow-forward-outline"} size={16} color="#222" />
-                    </TouchableOpacity>
-                    {sortDropdownOpen && (
-                        <View style={{ backgroundColor: '#fff', borderRadius: 8, elevation: 2, marginTop: 4 }}>
-                            {SORT_OPTIONS.map(opt => (
-                                <TouchableOpacity
-                                    key={opt.value}
-                                    style={{ padding: 12, backgroundColor: sortOption === opt.value ? '#e0f0ff' : '#fff' }}
-                                    onPress={() => {
-                                        setSortOption(opt.value);
-                                        setSortDropdownOpen(false);
-                                    }}
-                                >
-                                    <Text style={{ color: sortOption === opt.value ? '#007aff' : '#222' }}>{opt.label}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    )}
-                </View>
-                <TextInput
-                    style={styles.searchInput}
-                    placeholder="Search..."
-                    value={search}
-                    onChangeText={setSearch}
-                />
-                <TouchableOpacity style={styles.searchButton}>
-                    <Text style={{ color: "#888" }}>Search</Text>
-                </TouchableOpacity>
-            </View>
-
-            {/* Movie List */}
-            <View style={styles.movieList}>
-                {movies
-                    .map((item) => (
-                        <View key={item.id} style={styles.movieCard}>
+                        <View style={styles.movieCard}>
                             <Image
-                                source={{ uri: `https://image.tmdb.org/t/p/w500${item.poster_path || item.backdrop_path}`}}
+                                source={{ uri: `https://image.tmdb.org/t/p/w500${item.poster_path || item.backdrop_path}` }}
                                 style={styles.poster}
                                 resizeMode="cover"
                             />
                             <View style={{ flex: 1, paddingLeft: 12 }}>
                                 <Text style={styles.movieTitle}>{item.title}</Text>
                                 <Text style={styles.movieDate}>{formatDate(item.release_date)}</Text>
-                                <Text style={styles.movieOverview}>{item.overview}</Text>
+                                <Text style={styles.movieOverview} numberOfLines={3}>{item.overview}</Text>
                             </View>
                         </View>
-                    ))}
-            </View>
+                    </TouchableOpacity>
+                )}
+                ListFooterComponent={
+                    <View style={{ padding: 16 }}>
+                        <TouchableOpacity
+                            style={styles.loadMoreButton}
+                            onPress={() => setPage(prev => prev + 1)}
+                        >
+                            <Text style={{ color: "#fff", fontWeight: "bold" }}>Load More</Text>
+                        </TouchableOpacity>
+                    </View>
+                }
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={handleRefresh}
+                        colors={['#007aff']}
+                        tintColor="#007aff"
+                    />
+                }
+                onRefresh={handleRefresh}
+                refreshing={refreshing}
+            />}
 
-            {/* Load More Button */}
-            <View style={{ padding: 16 }}>
-                <TouchableOpacity style={styles.loadMoreButton}>
-                    <Text style={{ color: "#fff", fontWeight: "bold" }}>Load More</Text>
-                </TouchableOpacity>
-            </View>
-        </ScrollView>
+        </>
     );
 }
 

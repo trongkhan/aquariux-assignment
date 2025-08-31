@@ -11,7 +11,6 @@ const Api = axios.create({
 });
 
 Api.interceptors.request.use(config => {
-  console.log('Requesting:', config);
   // You can add authorization headers here if needed
   return config;
 });

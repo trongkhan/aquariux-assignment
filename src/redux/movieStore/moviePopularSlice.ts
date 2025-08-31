@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { initialPopularMovieState, PopularMovieState } from "../../models/movieModel";
+import { initialPopularMovieState, PopularMovieState, Movie } from "../../models/movieModel";
 
 const moviePopularSlice = createSlice({
     name: "moviePopular",
@@ -10,7 +10,7 @@ const moviePopularSlice = createSlice({
             state.error = null;
         },
         fetchPopularMoviesSuccess(state, action: PayloadAction<PopularMovieState>) {
-            state.movies = action.payload.results;
+            state.movies = action.payload.results as Movie[];
             state.loading = false;
         },
         fetchPopularMoviesFailure(state, action: PayloadAction<string>) {

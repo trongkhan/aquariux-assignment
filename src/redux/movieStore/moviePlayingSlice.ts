@@ -1,6 +1,6 @@
 // Movie slice in Redux
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { initialPlayingMovieState, PlayingMovies, } from "../../models/movieModel";
+import { initialPlayingMovieState, PlayingMovies, Movie } from "../../models/movieModel";
 
 const moviePlayingSlice = createSlice({
     name: "moviePlaying",
@@ -11,7 +11,7 @@ const moviePlayingSlice = createSlice({
             state.error = null;
         },
         fetchPlayingMoviesSuccess(state, action: PayloadAction<PlayingMovies>) {
-            state.movies = action.payload.results;
+            state.movies = action.payload.results as Movie[];
             state.loading = false;
         },
         fetchPlayingMoviesFailure(state, action: PayloadAction<string>) {

@@ -45,21 +45,21 @@ export interface PopularMovies {
 }
 
 export interface PlayingMovieState {
-    movies: PlayingMovies[];
+    movies: Movie[];
     loading: boolean;
     page: number;
     error: string | null;
 }
 
 export interface UpcomingMovieState {
-    movies: UpcomingMovies[];
+    movies: Movie[];
     loading: boolean;
     page: number;
     error: string | null;
 }
 
 export interface PopularMovieState {
-    movies: PopularMovies[];
+    movies: Movie[];
     loading: boolean;
     page: number;
     error: string | null;

@@ -1,8 +1,9 @@
 import { StyleSheet } from "react-native";
+import { Colors } from "../../const/enum/color";
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#f7f7f7",
+    backgroundColor: Colors.white,
     flex: 1,
   },
   header: {
@@ -11,6 +12,7 @@ const styles = StyleSheet.create({
   },
   filters: {
     paddingHorizontal: 16,
+    marginVertical: 8,
   },
   filterButton: {
     width: "100%",
