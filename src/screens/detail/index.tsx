@@ -111,9 +111,13 @@ const MovieDetailScreen = ({ navigation, route }: Props) => {
                         <Text style={[styles.boldText, { fontSize: 16 }]}>User Score</Text>
                     </View>
                     {/* Tagline */}
-                    <View style={{ paddingVertical: 16 }}>
-                        <Text style={[styles.italicText, { fontSize: 20 }]}>{movieDetail.tagline}</Text>
-                    </View>
+                    {movieDetail.tagline ? (
+                        <View style={{ paddingVertical: 16 }}>
+                            <Text style={[styles.italicText, { fontSize: 20 }]}>{movieDetail.tagline}</Text>
+                        </View>
+                    ) : (
+                        <View style={{paddingVertical: 8}}/>
+                    )}
                     {/* Overview */}
                     <Text style={styles.sectionTitle}>Overview</Text>
                     <View style={{ marginBottom: 8 }} />
@@ -126,7 +130,7 @@ const MovieDetailScreen = ({ navigation, route }: Props) => {
             </View>
 
             {/* Top Billed Cast */}
-            {movieCredit && (
+            {movieCredit && movieCredit.length > 0 && (
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, {color: Colors.black, marginBottom: 8}]}>Top Billed Cast</Text>
                     <ScrollView horizontal>
