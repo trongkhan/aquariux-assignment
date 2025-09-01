@@ -78,7 +78,11 @@ const HomeScreen = () => {
     // Use search slice from Redux
     const searchState = useSelector((state: RootState) => state.movieSearchReducer);
     const isSearching = !!search.trim();
-    const displayMovies = isSearching ? (searchState.results ? searchState.results.results : []) : movies;
+    const displayMovies = isSearching
+        ? Array.isArray(searchState.results?.results)
+            ? searchState.results.results
+            : []
+        : movies;
     console.log("Display Movies:", searchState);
     const isSearchLoading = searchState.loading;
 
