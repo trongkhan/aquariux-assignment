@@ -15,12 +15,9 @@ import { Provider } from 'react-redux'
 import store from './src/redux/store';
 
 function App() {
-  const isDarkMode = useColorScheme() === 'dark';
-
   return (
     <Provider store={store}>
       <SafeAreaProvider>
-        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
         <AppContent />
       </SafeAreaProvider>
     </Provider>
@@ -28,11 +25,9 @@ function App() {
 }
 
 function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
-
+  console.log('APP START')  
   return (
     <View style={{ backgroundColor: "#fff", flex: 1 }}>
-      <View style={{ height: safeAreaInsets.top }} />
       <RootNavigation />
     </View>
   );

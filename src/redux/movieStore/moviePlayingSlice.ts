@@ -1,6 +1,6 @@
 // Movie slice in Redux
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { initialPlayingMovieState, PlayingMovies, Movie } from "../../models/movieModel";
+import { initialPlayingMovieState, PlayingMovies, Movie } from "../../models/movieModels";
 
 const moviePlayingSlice = createSlice({
     name: "moviePlaying",

@@ -11,16 +11,21 @@ const Api = axios.create({
 });
 
 Api.interceptors.request.use(config => {
+  console.log('TMDB_ACCESS_TOKEN:', TMDB_ACCESS_TOKEN);
   // You can add authorization headers here if needed
+  console.log('Request :', config);
   return config;
 });
 
-Api.interceptors.response.use(response => {
-  console.log('Response:', response);
-  return response;
-}, error => {
-  // Handle errors globally
-  return Promise.reject(error);
-});
+Api.interceptors.response.use(
+  response => {
+    console.log('Response:', response);
+    return response;
+  },
+  error => {
+    console.log('Error:', error); // Add this line
+    return Promise.reject(error);
+  }
+);
 
 export default Api;

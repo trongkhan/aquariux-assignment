@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { UpcomingMovies, initialUpcomingMovieState, Movie } from "../../models/movieModel";
+import { UpcomingMovies, initialUpcomingMovieState, Movie } from "../../models/movieModels";
 
 const movieUpcomingSlice = createSlice({
     name: "movieUpcoming",

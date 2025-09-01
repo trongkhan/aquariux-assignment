@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { FlatList, Image, RefreshControl, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { Movie } from "../../models/movieModel";
+import { Movie } from "../../models/movieModels";
 import { formatDate } from "../../configs";
 import styles from "./style";
 import { useDispatch, useSelector } from "react-redux";
@@ -10,6 +10,7 @@ import CFilterList from '../../components/CFilterList';
 import CHeader from "../../components/CHeader";
 import CLoadingIndicator from "../../components/CLoadingIndicator";
 import { RoutesName } from "../../const/enum/routeNames";
+import { useNavigation } from "@react-navigation/native";
 
 const CATEGORY_OPTIONS = [
     { label: "Now Playing", value: "now_playing" },
@@ -25,6 +26,7 @@ const SORT_OPTIONS = [
 
 
 const HomeScreen = () => {
+    const navigation = useNavigation();
     const [search, setSearch] = useState<string>("");
     const [category, setCategory] = useState<string>("now_playing");
     const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
@@ -43,6 +45,8 @@ const HomeScreen = () => {
     }, [category]);
 
     useEffect(() => {
+        console.log("FETCHING DATA");
+
         // Fetch movies for the selected category and page
         if (category === "now_playing") {
             dispatch(fetchPlayingMovies(page));
@@ -82,49 +86,52 @@ const HomeScreen = () => {
     };
 
     return (
-        <>
-            {isLoading ? <CLoadingIndicator /> : <FlatList
-                style={styles.container}
-                contentContainerStyle={{ paddingBottom: 48 }}
-                data={movies}
-                keyExtractor={(item) => item.id.toString()}
-                ListHeaderComponent={
-                    <>
-                        {/* Header */}
-                        <CHeader />
-                        {/* Filters */}
-                        <View style={styles.filters}>
-                            {/* Category Dropdown */}
-                            <CFilterList
-                                options={CATEGORY_OPTIONS}
-                                selectedValue={category}
-                                dropdownOpen={dropdownOpen}
-                                setDropdownOpen={setDropdownOpen}
-                                onSelect={setCategory}
-                            />
-                            {/* Sort by Dropdown */}
-                            <CFilterList
-                                options={SORT_OPTIONS}
-                                selectedValue={sortOption}
-                                dropdownOpen={sortDropdownOpen}
-                                setDropdownOpen={setSortDropdownOpen}
-                                onSelect={setSortOption}
-                            />
-                            <TextInput
-                                style={styles.searchInput}
-                                placeholder="Search..."
-                                value={search}
-                                onChangeText={setSearch}
-                            />
-                            <TouchableOpacity style={styles.searchButton}>
-                                <Text style={{ color: "#888" }}>Search</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </>
+        <FlatList
+            style={styles.container}
+            contentContainerStyle={{ paddingBottom: 48 }}
+            data={isLoading ? [...movies, { id: 'loading-indicator' }] : movies}
+            keyExtractor={(item) => typeof item.id === 'string' ? item.id : item.id.toString()}
+            ListHeaderComponent={
+                <>
+                    {/* Header */}
+                    <CHeader />
+                    {/* Filters */}
+                    <View style={styles.filters}>
+                        {/* Category Dropdown */}
+                        <CFilterList
+                            options={CATEGORY_OPTIONS}
+                            selectedValue={category}
+                            dropdownOpen={dropdownOpen}
+                            setDropdownOpen={setDropdownOpen}
+                            onSelect={setCategory}
+                        />
+                        {/* Sort by Dropdown */}
+                        <CFilterList
+                            options={SORT_OPTIONS}
+                            selectedValue={sortOption}
+                            dropdownOpen={sortDropdownOpen}
+                            setDropdownOpen={setSortDropdownOpen}
+                            onSelect={setSortOption}
+                        />
+                        <TextInput
+                            style={styles.searchInput}
+                            placeholder="Search..."
+                            value={search}
+                            onChangeText={setSearch}
+                        />
+                        <TouchableOpacity style={styles.searchButton}>
+                            <Text style={{ color: "#888" }}>Search</Text>
+                        </TouchableOpacity>
+                    </View>
+                </>
+            }
+            renderItem={({ item }) => {
+                if (item.id === 'loading-indicator') {
+                    return <CLoadingIndicator />;
                 }
-                renderItem={({ item }) => (
+                return (
                     <TouchableOpacity
-                        // onPress={() => navigation.navigate(RoutesName.Details, { movie: item })}
+                        onPress={() => navigation.navigate(RoutesName.Details, { movie: item })}
                         activeOpacity={0.8}
                     >
                         <View style={styles.movieCard}>
@@ -140,8 +147,10 @@ const HomeScreen = () => {
                             </View>
                         </View>
                     </TouchableOpacity>
-                )}
-                ListFooterComponent={
+                );
+            }}
+            ListFooterComponent={
+                !isLoading ? (
                     <View style={{ padding: 16 }}>
                         <TouchableOpacity
                             style={styles.loadMoreButton}
@@ -150,20 +159,19 @@ const HomeScreen = () => {
                             <Text style={{ color: "#fff", fontWeight: "bold" }}>Load More</Text>
                         </TouchableOpacity>
                     </View>
-                }
-                refreshControl={
-                    <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={handleRefresh}
-                        colors={['#007aff']}
-                        tintColor="#007aff"
-                    />
-                }
-                onRefresh={handleRefresh}
-                refreshing={refreshing}
-            />}
-
-        </>
+                ) : null
+            }
+            refreshControl={
+                <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={handleRefresh}
+                    colors={['#007aff']}
+                    tintColor="#007aff"
+                />
+            }
+            onRefresh={handleRefresh}
+            refreshing={refreshing}
+        />
     );
 }
 
