@@ -66,7 +66,8 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: Colors.white,
     borderRadius: 8,
-    elevation: 1,
+    borderWidth: 0.2,
+    borderColor: Colors.lightGray,
   },
   filterButtonText: {
     fontSize: 16,

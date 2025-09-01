@@ -6,6 +6,7 @@ import { fetchUpcomingMoviesFailure, fetchUpcomingMoviesStart, fetchUpcomingMovi
 import { fetchPopularMoviesFailure, fetchPopularMoviesStart, fetchPopularMoviesSuccess } from "./moviePopularSlice";
 import { fetchMovieDetailFailure, fetchMovieDetailStart, fetchMovieDetailSuccess } from "./movieDetailSlice";
 import { fetchMovieCreditFailure, fetchMovieCreditStart, fetchMovieCreditSuccess } from "./movieCreditSlice";
+import { fetchSearchMovieFailure, fetchSearchMovieStart, fetchSearchMovieSuccess } from "./movieSearchSlice";
 
 export const fetchPlayingMovies = (page: number) => async (dispatch: AppDispatch) => {
   dispatch(fetchPlayingMoviesStart());
@@ -54,5 +55,15 @@ export const fetchMovieCredit = (id: number) => async (dispatch: AppDispatch) =>
     dispatch(fetchMovieCreditSuccess(response.data));
   } catch (error: any) {
     dispatch(fetchMovieCreditFailure(error?.message ?? ""));
+  }
+};
+
+export const fetchSearchMovie = (query: string, page: number) => async (dispatch: AppDispatch) => {
+  dispatch(fetchSearchMovieStart());
+  try {
+    const response = await Api.get(`${routeApis.searchMovie}?query=${query}&language=en-US&page=${page}`);
+    dispatch(fetchSearchMovieSuccess(response.data));
+  } catch (error: any) {
+    dispatch(fetchSearchMovieFailure(error?.message ?? ""));
   }
 };

@@ -4,7 +4,7 @@ import { Movie } from "../../models/movieModels";
 import { formatDate } from "../../configs";
 import styles from "./style";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchPlayingMovies, fetchPopularMovies, fetchUpcomingMovies } from "../../redux/movieStore/movieThunks";
+import { fetchPlayingMovies, fetchPopularMovies, fetchUpcomingMovies, fetchSearchMovie } from "../../redux/movieStore/movieThunks";
 import { AppDispatch, RootState } from "../../redux/store";
 import CFilterList from '../../components/CFilterList';
 import CHeader from "../../components/CHeader";
@@ -28,6 +28,7 @@ const SORT_OPTIONS = [
 const HomeScreen = () => {
     const navigation = useNavigation();
     const [search, setSearch] = useState<string>("");
+    // Remove local search state, use Redux search slice
     const [category, setCategory] = useState<string>("now_playing");
     const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
     const [sortDropdownOpen, setSortDropdownOpen] = useState<boolean>(false);
@@ -40,22 +41,23 @@ const HomeScreen = () => {
     const popularMovieState = useSelector((state: RootState) => state.moviePopularReducer);
 
     useEffect(() => {
-        // Reset to page 1 when category changes
+        // Reset to page 1 and clear search when category changes
         setPage(1);
+        // Optionally, you can dispatch an action to clear search state here if needed
     }, [category]);
 
     useEffect(() => {
-        console.log("FETCHING DATA");
-
-        // Fetch movies for the selected category and page
-        if (category === "now_playing") {
-            dispatch(fetchPlayingMovies(page));
-        } else if (category === "upcoming") {
-            dispatch(fetchUpcomingMovies(page));
-        } else if (category === "popular") {
-            dispatch(fetchPopularMovies(page));
+        // Only fetch category movies if not searching
+        if (!search.trim()) {
+            if (category === "now_playing") {
+                dispatch(fetchPlayingMovies(page));
+            } else if (category === "upcoming") {
+                dispatch(fetchUpcomingMovies(page));
+            } else if (category === "popular") {
+                dispatch(fetchPopularMovies(page));
+            }
         }
-    }, [category, page, dispatch]);
+    }, [category, page, dispatch, search]);
 
     useEffect(() => {
         if (!playingMovieState.loading && !upcomingMovieState.loading && !popularMovieState.loading) {
@@ -73,6 +75,33 @@ const HomeScreen = () => {
         movies = popularMovieState?.movies || [];
     }
 
+    // Use search slice from Redux
+    const searchState = useSelector((state: RootState) => state.movieSearchReducer);
+    const isSearching = !!search.trim();
+    const displayMovies = isSearching ? (searchState.results ? searchState.results.results : []) : movies;
+    console.log("Display Movies:", searchState);
+    const isSearchLoading = searchState.loading;
+
+    // Sort movies based on selected sort option
+    const sortMovies = (movies: Movie[], sortOption: string): Movie[] => {
+        switch (sortOption) {
+            case "alphabetical":
+                return [...movies].sort((a, b) => a.title.localeCompare(b.title));
+            case "rating":
+                return [...movies].sort((a, b) => (b.vote_average ?? 0) - (a.vote_average ?? 0));
+            case "releaseDate":
+                return [...movies].sort((a, b) => {
+                    const dateA = new Date(a.release_date).getTime();
+                    const dateB = new Date(b.release_date).getTime();
+                    return dateB - dateA;
+                });
+            default:
+                return movies;
+        }
+    };
+
+    const sortedMovies = sortMovies(displayMovies, sortOption);
+
     const handleRefresh = async () => {
         setRefreshing(true);
         setPage(1);
@@ -85,11 +114,17 @@ const HomeScreen = () => {
         }
     };
 
+    // Search handler using fetchSearchMovie thunk
+    const handleSearch = () => {
+        if (!search.trim()) return;
+        dispatch(fetchSearchMovie(search, 1));
+    };
+
     return (
         <FlatList
             style={styles.container}
             contentContainerStyle={{ paddingBottom: 48 }}
-            data={isLoading ? [...movies, { id: 'loading-indicator' }] : movies}
+            data={(isLoading || isSearchLoading) ? [...sortedMovies, { id: 'loading-indicator' }] : sortedMovies}
             keyExtractor={(item) => typeof item.id === 'string' ? item.id : item.id.toString()}
             ListHeaderComponent={
                 <>
@@ -119,7 +154,7 @@ const HomeScreen = () => {
                             value={search}
                             onChangeText={setSearch}
                         />
-                        <TouchableOpacity style={styles.searchButton}>
+                        <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
                             <Text style={{ color: "#888" }}>Search</Text>
                         </TouchableOpacity>
                     </View>
@@ -129,6 +164,8 @@ const HomeScreen = () => {
                 if (item.id === 'loading-indicator') {
                     return <CLoadingIndicator />;
                 }
+                // Type guard for Movie
+                if (!('title' in item)) return null;
                 return (
                     <TouchableOpacity
                         onPress={() => navigation.navigate(RoutesName.Details, { movie: item })}
@@ -150,7 +187,7 @@ const HomeScreen = () => {
                 );
             }}
             ListFooterComponent={
-                !isLoading ? (
+                !isLoading && !isSearching ? (
                     <View style={{ padding: 16 }}>
                         <TouchableOpacity
                             style={styles.loadMoreButton}

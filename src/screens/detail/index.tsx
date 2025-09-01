@@ -26,7 +26,6 @@ const MovieDetailScreen = ({ navigation, route }: Props) => {
     const circumference = 2 * Math.PI * radius;
     const progress = (score / 100) * circumference;
 
-    console.log('movie credit: ', movieCredit);
 
     useEffect(() => {
         dispatch(fetchMovieDetail(movie.id));
@@ -130,7 +129,7 @@ const MovieDetailScreen = ({ navigation, route }: Props) => {
             {movieCredit && (
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, {color: Colors.black, marginBottom: 8}]}>Top Billed Cast</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <ScrollView horizontal>
                         {(movieCredit as any).slice(0, 10).map((actor: any, idx: number) => (
                             <View key={idx} style={styles.castCard}>
                                 {actor.profile_path ? (
@@ -227,7 +226,7 @@ const styles = StyleSheet.create({
     // Cast
     castCard: { width: 120, marginRight: 12, alignItems: 'center', backgroundColor: '#fff', borderRadius: 8, elevation: 2, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } },
     castImage: { width: 120, height: 120, marginBottom: 8, borderRadius: 8, backgroundColor: Colors.dimGray },
-    castImagePlaceholder: { width: 80, height: 80, backgroundColor: Colors.dimGray, marginBottom: 8 },
+    castImagePlaceholder: { width: 120, height: 120, backgroundColor: Colors.dimGray, marginBottom: 8, borderRadius: 8 },
     // Recommendations
     recCard: { width: 140, marginRight: 12 },
     recImagePlaceholder: { width: 140, height: 80, borderRadius: 8, backgroundColor: Colors.dimGray, marginBottom: 8 },

@@ -6,4 +6,5 @@ export const routeApis = {
     credit: `/movie`,
     accountDetail: `/account/details`,
     recommendation: `/movie/recommendations`,
+    searchMovie: `/search/movie`
 }
